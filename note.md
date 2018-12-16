@@ -1,93 +1,96 @@
+# taro
+
 Taro 在编译时提供了一些内置的环境变量帮助用户做一些特殊处理。
 
-#### process.env.TARO_ENV
+## process.env.TARO_ENV
 
 用于判断当前编译类型，目前有 weapp/swan/h5/rn 四个取值，可以通过这个变量来书写对应不同环境下的代码。
 
-#### 微信小程序原生作用域获取
+## 微信小程序原生作用域获取
 
 在 Taro 的页面和组件类中， this 指向的是 Taro 页面或组件的实例：
 
-```
+```js
 import Taro, { Component } from '@tarojs/taro'
 import { View } from '@taro/components'
 
 export default class Menu extends Component {
-	static defaultProps = {
-		data: []
-	}
+    static defaultProps = {
+        data: []
+    }
 
-	constructor(props) {
-		super(props)
-		this.state = {
-			checked: props.checked
-		}
-	}
+    constructor(props) {
+        super(props)
+        this.state = {
+            checked: props.checked
+        }
+    }
 
-	componentWillMount () {
-		console.log(this) 	// this => 组件　 Menu 的实例
-	}
+    componentWillMount () {
+        console.log(this)     // this => 组件　 Menu 的实例
+    }
 
-	render () {
-		return <View />
-	}
+    render () {
+        return <View />
+    }
 }
 ```
+
 一般获取 Taro 的页面和组件所对应的小程序原生页面和组件的实例，可以通过 **this.$scope** 访问到他们。
 
-#### 组件的外部样式和全局样式
+## 组件的外部样式和全局样式
 
 - 组件和引用组件的页面中使用后代选择器 (.a .b) 在一些极端情况下，会有非预期的表现。
 - 继承样式，如 font、color，会从组件外（父组件）继承到组件内，但是引用组件时在组件节点上书写的 className 无效
 
-```
-\#a { } 	/* id 选择器 组件中不能使用 */
-[a] { } 	 	/*  属性选择器 组件中不能使用 */
-button { } 	/*  标签名选择器 组件中不能使用 */
-.a > .b { } 	/* 除非 .a 是 view 组件节点，否则不一定会生效 */
+```css
+#a { }     /* id 选择器 组件中不能使用 */
+[a] { }     /*  属性选择器 组件中不能使用 */
+button { }     /*  标签名选择器 组件中不能使用 */
+.a > .b { }     /* 除非 .a 是 view 组件节点，否则不一定会生效 */
 ```
 
-##### 外部样式类
+### 外部样式类
 
 如果想传递样式给应用的自定义组件，以下写法（直接传递 className）不可行：
 
-```
+```js
 /* CustomComp.js */
 export default CustomComp extends Component {
-	static defaultProps = {
-		className: ''
-	}
-	render () {
-		return <View className={this.props.className}>样式不会由组件外的 class 决定</View>
-	}
+    static defaultProps = {
+        className: ''
+    }
+    render () {
+        return <View className={this.props.className}>样式不会由组件外的 class 决定</View>
+    }
 }
 
 /* MyPage.js */
 
 export default MyPage extends Component {
-	render () {
-		return <CustomComp className='red-text' />
-	}
+    render () {
+        return <CustomComp className='red-text' />
+    }
 }
 ```
 
 需要利用 externalClasses 定义若干个外部样式类。（从小程序基础库版本 1.9.90 开始支持）
 
-```
+```js
 /* CustomComp.js */
 export default CustomComp extends Component {
-	static externalClasses = ['my-class']
+    static externalClasses = ['my-class']
 
-	render() {
-		return <View className='my-class'>这段样式由外部决定</View>
-	}
+    render() {
+        return <View className='my-class'>这段样式由外部决定</View>
+    }
 }
 
 /* Mypage.js */
 export default MyPage extends Component {
-	render () {
-		return <CustomComp my-class='red-text' />
-	}
+    render () {
+        return <CustomComp my-class='red-text' />
+    }
 }
 ```
 
@@ -97,15 +100,15 @@ export default MyPage extends Component {
 
 使用外部演示类可以让组件使用指定的组件外样式类，如果希望组件外样式类能够完全影响组件内部，可以将组件构造器中的 options.addGlobalClass 字段置为 true。这个特性从小程序基础库版本 2.2.3 开始支持。
 
-```
+```js
 export default CustomComp extends Component {
-	static options = {
-		addGlobalClass: true
-	}
+    static options = {
+        addGlobalClass: true
+    }
 
-	render () {
-		return <View className="red-text">这段文本的颜色由组件外的 Class 决定 </View>
-	}
+    render () {
+        return <View className="red-text">这段文本的颜色由组件外的 Class 决定 </View>
+    }
 }
 ```
 
@@ -114,25 +117,23 @@ export default CustomComp extends Component {
 - 不能在包含 JSX 元素的 map 循环中使用 if 表达式
 - 不能使用 Array#map 之外的方法操作 JSX 数组
 - 不能在 JSX 参数中使用匿名函数
-- 暂不支持在render() 之外的方法定义 JSX
+- 暂不支持在 render() 之外的方法定义 JSX
 - 不允许在 JSX 参数(props)中传入 JSX 元素
 - 不能在 JSX 参数中使用对象展开符
 - 不支持无状态组件
 
-在微信小程序端的自定义组件中，只有在 properties 中指定的属性才能在福组件传入并接收
+在微信小程序端的自定义组件中，只有在 properties 中指定的属性才能在父组件传入并接收
 
-```
+```js
 Component({
-	properties: {
-		myProperty: {
-			type: String, // 必填
-			value: '',	// 可选
-			observer: function(newVal, oldVal, changedPath){
-				
-			}
-		},
-		myProperty2: String // 简化定义方式
-	}
+    properties: {
+        myProperty: {
+            type: String, // 必填
+            value: '',    // 可选
+            observer: function(newVal, oldVal, changedPath){}
+        },
+        myProperty2: String // 简化定义方式
+    }
 })
 ```
 
@@ -143,16 +144,16 @@ Component({
 
 在 Taro 中，父组件要往子组件传递函数，属性名必须以 on 开头
 
-```
+```js
 class Parent extends Component {
-	handleEvent () {
+    handleEvent () {
 
-	}
-	render() {
-		return (
-			<Custom onTrigger={this,handleEvent}></Custom>
-		)
-	}
+    }
+    render() {
+        return (
+            <Custom onTrigger={this.handleEvent}></Custom>
+        )
+    }
 }
 ```
 
@@ -162,24 +163,24 @@ class Parent extends Component {
 
 由于微信小程序里页面在 onLoad 时才能拿到页面的路由参数，而页面 onLoad 前组件已经 attached 了。因此页面的 componentWillMount 可能会与预期不太一致。
 
-```
+```js
 // 错误写法
 render () {
-	// 在 willMount 之前无法拿到路由参数
-	const abc = this.$router.params.abc
-	return <Custom abc={abc} />
+    // 在 willMount 之前无法拿到路由参数
+    const abc = this.$router.params.abc
+    return <Custom abc={abc} />
 }
 
 // 正确写法
 componentWillMount () {
-	const abc = this.$router.params.abc
-	this.setState({
-		abc
-	})
+    const abc = this.$router.params.abc
+    this.setState({
+        abc
+    })
 }
 render() {
-	// 增加一个兼容判断
-	return this.state.abc && <Custom abc={abc} />
+    // 增加一个兼容判断
+    return this.state.abc && <Custom abc={abc} />
 }
 ```
 
@@ -189,7 +190,7 @@ render() {
 
 在 Taro 编译到小程序端后，组件的 constructor 与 render 默认会多调用一次。
 
-这是因为 Taro 组件编译后就是小程序的自定义组件，而小程序的自定义组件的初始化时是可以指定 data 来让组件拥有初始化数据的，开发者一般会在组件的 constructor 中设置一些初始化的 state，同时也会在 render 中处理 state 和 props 产生的新的数据，在 Trao 中多出来的这一次提前调用，就是为了收集组件的初始化数据，而自定义组件体验生成 data，以保证组件初始化时能带有数据，让组件初次渲染正常
+这是因为 Taro 组件编译后就是小程序的自定义组件，而小程序的自定义组件的初始化时是可以指定 data 来让组件拥有初始化数据的，开发者一般会在组件的 constructor 中设置一些初始化的 state，同时也会在 render 中处理 state 和 props 产生的新的数据，在 Trao 中多出来的这一次提前调用，就是为了收集组件的初始化数据，而自定义组件提前生成 data，以保证组件初始化时能带有数据，让组件初次渲染正常
 
 #### JSX 编码必须用 单引号
 
@@ -201,25 +202,25 @@ render() {
 
 Taro 提供了 componentWillPreload 钩子，他接收页面跳转的参数作为参数，可以把需要预加载的内容通过 return 返回，然后在组件触发 componentWillMount 后即可通过 this.$preloadData 获取到预加载的内容。
 
-```
+```js
 class Index extends Component {
-	componentWillMount () {
-		console.log('isFetching: ', this.isFetching)
-		this.$preloadData
-			.then(res => {
-				console.log('res: ', res);
-				this.isFetching = false
-			})
-	}
+    componentWillMount () {
+        console.log('isFetching: ', this.isFetching)
+        this.$preloadData
+            .then(res => {
+                console.log('res: ', res);
+                this.isFetching = false
+            })
+    }
 
-	componentWillPreload (params) {
-		return this.fetchData(params.url)
-	}
+    componentWillPreload (params) {
+        return this.fetchData(params.url)
+    }
 
-	fetchData() {
-		this.isFetching = true;
-		...
-	}
+    fetchData() {
+        this.isFetching = true;
+        ...
+    }
 }
 ```
 
@@ -230,23 +231,23 @@ class Index extends Component {
 
 1. 自行命名一个 JS 文件，例如 global_data.js
 
-```
+```js
 const globalData = {}
 
 export function set(key, val) {
-	globalData[key] = val
+    globalData[key] = val
 }
 
 export function get(key) {
-	return globalData[key]
+    return globalData[key]
 }
 ```
+
 随后可以在任意位置进行使用啦
 
-```
+```js
 import { set as setGlobalData, get as GetGlobalData} from './path_to/globalData';
 
 setGlobalData('test', 1)
 getGlobalData('test')
 ```
-

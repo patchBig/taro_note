@@ -255,4 +255,181 @@ render () {
 10. 点击回调或者事件回调 比如 onClickSubmit() 或者 onChangeDescription()
 11. render
 
-[通用约束与建议](https://nervjs.github.io/taro/docs/spec-for-taro.html#%E9%80%9A%E7%94%A8%E7%BA%A6%E6%9D%9F%E4%B8%8E%E5%BB%BA%E8%AE%AE)
+### 推荐使用对象解构的方式来使用 state、props
+
+```js
+import Taro, { Component } from '@tarojs/taro'
+import { View, Input } from '@tarojs/components'
+
+class MyComponent extends Component {
+  state = {
+    myTime: 12
+  }
+  render () {
+    const { isEnable } = this.props     // ✓ 正确
+    const { myTime } = this.state     // ✓ 正确
+    return (
+      <View className='test'>
+        {isEnable && <Text className='test_text'>{myTime}</Text>}
+      </View>
+    )
+  }
+}
+```
+
+### 不要以 class/id/style 作为自定义组件的属性名
+
+```js
+<Hello class='foo' />     // ✗ 错误
+<Hello id='foo' />     // ✗ 错误
+<Hello style='foo' />     // ✗ 错误
+```
+
+### 不要在调用 this.setState 时使用 this.state
+
+> 由于 this.setState 异步的缘故，这样的做法会导致一些错误，可以通过给 this.setState 传入函数来避免
+
+```js
+this.setState({
+  value: this.state.value + 1
+}) // ✗ 错误
+
+this.setState(prevState => ({ value: prevState.value + 1}))
+```
+
+### map 循环时请给元素加上 key 属性
+
+```js
+list.map(item => {
+  return (
+    <View className='list_item' key={item.id}>{item.name}</View>
+  )
+})
+```
+
+### 尽量避免在 componentDidMount 中调用 this.setState
+
+> 因为在 componentDidMount 中调用 this.setState 会触发更新操作
+
+```js
+import Taro, { Component } from '@tarojs/taro'
+import { View, Input } from '@tarojs/components'
+
+class MyComponent extends Component {
+  state = {
+    myTime: 12
+  }
+
+  componentDidMount () {
+    this.setState({   // 尽量避免，可以在 componentWillMount 中处理
+      name: 1
+    })
+  }
+
+  render () {
+    const { isEnable } = this.props
+    const { myTime } = this.state
+    return (
+      <View className='test'>
+        {isEnable && <Text className='test_text'>{myTime}</Text>}
+      </View>
+    )
+  }
+}
+```
+
+### 不要在 componentWillUpdate/componentDidUpdate/render 中调用 this.setState
+
+```js
+import Taro, { Component } from '@tarojs/taro'
+import { View, Imput } from '@tarojs/comonents'
+
+class MyComponent extends Component {
+  state = {
+    myTime: 12
+  }
+
+  componentWillUpdate () {
+    this.setState({ // ✗ 错误
+      name: 1
+    })
+  }
+
+  componentDidUpdate () {
+    this.setState({ // ✗ 错误
+      name:1
+    })
+  }
+
+  render () {
+    const { isEnable } = this.props
+    const { myTime } = this.state
+    this.setState({ // 错误
+      name: 11
+    })
+    return (
+      <View className='test'>
+        {isEnable && <Text className='test_text'>{myTime}</Text>}
+      </View>
+    )
+  }
+}
+```
+
+### 组件最好定义 defaultProps
+
+```js
+import Taro, { Component } from '@tarojs/taro'
+import { View, Input } from '@tarojs/components'
+
+class MyComponent extends Component {
+  static defaultProps = {
+    isEnable: true
+  }
+
+  state = {
+    myTime: 12
+  }
+
+  render () {
+    const { isEnable } = this.props
+    const { myTime } = this.state
+
+    return (
+      <View className='test'>
+        {isEnable && <Text className='test_text'>{myTime}</Text>}
+      </View>
+    )
+  }
+}
+```
+
+### 子组件传入函数时属性名需要以 on 开头
+
+```js
+import Taro, { Component } from '@tarojs/taro'
+import { View, Input } from '@tarojs/components'
+
+import Tab from '../../components/Tab/Tab'
+
+class MyComponent extends Component {
+  state = {
+    myTime: 12
+  }
+
+  clickHandler (e) {
+    console.log(e)
+  }
+  
+  render () {
+    const { myTime } = this.state
+
+    return (
+      <View className='test'>
+        <Tab onChange={this.clickHandler} />    // ✓ 正确
+        <Text className='test_text'>{myTime}</Text>
+      </View>
+    )
+  }
+}
+```

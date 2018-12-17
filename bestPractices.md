@@ -115,12 +115,101 @@ export default CustomComp extends Component {
 ##### 关于 JSX 支持程度
 
 - 不能在包含 JSX 元素的 map 循环中使用 if 表达式
+
+```js
+// 以下代码会被 ESLint 提示警告，同时在 Taro（小程序端）也不会有效：
+numbers.map((number) => {
+  let element = null
+  const isOdd = number % 2
+  if (isOdd) {
+    element = <Custom />
+  }
+  return element
+})
+
+// 尽量在 map 循环中使用条件表达式或逻辑表达式
+numbers.map((number) => {
+  const isOdd = number % 2
+  return isOdd ? <Custom /> : null
+})
+
+numbers.map((number) => {
+  const isOdd = number % 2
+  return isOdd && <Custom />
+})
+```
+
 - 不能使用 Array#map 之外的方法操作 JSX 数组
+
+> Taro 在小程序端实际上把 JSX 转换成了字符串模板，而一个原生 JSX 表达式实际上是一个 React/Nerv 元素(react-element)的构造器，因此在原生 JSX 中你可以随意地对一组 React 元素进行操作。但在 Taro 中你只能使用 map 方法，Taro 转换成小程序中 wx:for
+
 - 不能在 JSX 参数中使用匿名函数
+
+```js
+// 以下代码会被 ESLint 提示警告，同时在 Taro（小程序端）也不会有效：
+<View onClick={() => this.handleClick()} />
+
+<View onClick={(e) => this.handleClick(e)} />
+
+<View onClick={() => ({})} />
+
+<View onClick={function () {}} />
+
+<View onClick={function (e) {this.handleClick(e)}} />
+
+//使用 bind 或 类参数绑定函数
+<View onClick={this.props.hanldeClick.bind(this)} />
+```
+
 - 暂不支持在 render() 之外的方法定义 JSX
 - 不允许在 JSX 参数(props)中传入 JSX 元素
 - 不能在 JSX 参数中使用对象展开符
+
+```js
+// 以下代码会被 ESLint 提示警告，同时在 Taro（小程序端）也不会有效：
+<View {...this.props} />
+
+<View {...props} />
+
+<Custom {...props} />
+
+// 以下代码不会被警告，也应当在 Taro 任意端中能够运行：
+const { id, ...rest } = obj
+
+const [ head, ...tail]  = array
+
+const obj = { id, ...rest }
+```
+
 - 不支持无状态组件
+
+```js
+// 以下代码会被 ESLint 提示警告，同时在 Taro（小程序端）也不会有效：
+function Test () {
+  return <View />
+}
+
+function Test (ary) {
+  return ary.map(() => <View />)
+}
+
+const Test = () => {
+  return <View />
+}
+
+const Test = function () {
+  return <View />
+}
+
+// 以下代码不会被警告，也应当在 Taro 任意端中能够运行：
+class App extends Component {
+  render () {
+    return (
+      <View />
+    )
+  }
+}
+```
 
 在微信小程序端的自定义组件中，只有在 properties 中指定的属性才能在父组件传入并接收
 

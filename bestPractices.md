@@ -158,6 +158,12 @@ numbers.map((number) => {
 <View onClick={function (e) {this.handleClick(e)}} />
 
 //使用 bind 或 类参数绑定函数
+<View onClick={this.hanldeClick} />
+
+<View onClick={this.props.hanldeClick} />
+
+<View onClick={this.hanldeClick.bind(this)} />
+
 <View onClick={this.props.hanldeClick.bind(this)} />
 ```
 
